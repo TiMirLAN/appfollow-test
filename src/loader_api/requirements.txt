@@ -1,2 +1,4 @@
 aiohttp==3.4.4
 motor==2.0.0
+PyChromeDevTools==0.1
+beautifulsoup4==4.6.0
