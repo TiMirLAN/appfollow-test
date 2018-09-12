@@ -1,6 +1,16 @@
 version: "3"
 
 services:
+  loader:
+    container_name: "loader-api"
+    ports:
+      - "90:8080"
+    depends_on:
+      - "mongodb"
+      - "chromium"
+    build:
+      context: ./src/loader_api
+
   mongodb: 
     image: mongo:latest
     container_name: "mongodb"
@@ -8,12 +18,11 @@ services:
       - "27017:27017"
     volumes:
       - ./mongodata/db:/data/db
-  loader:
-    container_name: "loader-api"
+
+  chromium:
     ports:
-      - "90:8080"
-    depends_on:
-      - "mongodb"
+      - "9222:9222"
     build:
-      context: ./src/loader_api
+      context: ./src/chromium
+
 
