@@ -8,8 +8,11 @@ services:
     depends_on:
       - "mongodb"
       - "chromium"
+    environment:
+      ICONS_PATH: /icons
     build:
       context: ./src/loader_api
+      volumes: ./assets/icons:/icons
 
   mongodb: 
     image: mongo:latest

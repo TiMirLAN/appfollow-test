@@ -4,3 +4,4 @@ node_modules/
 *.pyo
 
 mongodata/
+assets/icons/

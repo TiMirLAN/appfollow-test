@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # coding=utf-8
-
 from asyncio import sleep
+from pathlib import Path
+from os import environ
+from urllib.request import urlopen
 from aiohttp import web
 from bs4 import BeautifulSoup
 import PyChromeDevTools
@@ -10,6 +12,8 @@ GOOGLE_PLAY_URL_TEMPLATE = (
     'https://play.google.com/store/apps/details'
     '?id={id}&hl={hl}'
 )
+ICONS_PATH = environ['ICONS_PATH']
+# Поиск по классам ненадёжен, лучше искать по содержимому.
 CLICK_EXPRESSION = """
 let allLinks = document.querySelectorAll('.hrTbp');
 let permissionsLink = allLinks[allLinks.length - 4];
@@ -24,9 +28,7 @@ def show_permissions_popup(chrome):
     chrome.Runtime.evaluate(expression=CLICK_EXPRESSION)
 
 
-def get_permissiions_html(chrome):
-    document = chrome.DOM.getDocument()
-    body_node_id = document['result']['root']['children'][1]['children'][1]['nodeId']
+def get_permissiions_html(chrome, body_node_id):
     permissions_node = chrome.DOM.querySelector(
         selector='[jscontroller=KkXpv][role=dialog] .fnLizd',
         nodeId=body_node_id
@@ -43,6 +45,19 @@ def parse_permissions(permissions_html):
         permissions=[li.getText() for li in div.ul.children]
     ) for div in soup.find_all(class_="yk0PFc")]
 
+
+def load_icon(chrome, body_node_id, app_id):
+    icon_node = chrome.DOM.querySelector(
+        selector='.dQrBL img',
+        nodeId=body_node_id
+    )
+    icon_node_id = icon_node['result']['nodeId']
+    icon_data = chrome.DOM.getAttributes(nodeId=icon_node_id)
+    icon_attrs = icon_data['result']['attributes']
+    icon_src = icon_attrs[icon_attrs.index('src') + 1]
+    icon_path = Path(ICONS_PATH) / '{}.webp'.format(app_id) 
+    with urlopen(icon_src) as remote, open(icon_path, 'wb') as local:
+        local.write(remote.read())
 
 
 chrome = PyChromeDevTools.ChromeInterface()
@@ -68,8 +83,11 @@ async def load(request):
     # Должен быть не sleep, должно быть ожидание события перерисовки
     # или/и получения ответа от сервера.
     await sleep(2)
-    permissions_html = get_permissiions_html(chrome)
+    document = chrome.DOM.getDocument()
+    body_node_id = document['result']['root']['children'][1]['children'][1]['nodeId']
+    permissions_html = get_permissiions_html(chrome, body_node_id)
     permissions_data = parse_permissions(permissions_html)
+    load_icon(chrome, body_node_id, request.query.get('id'))
     return web.json_response(permissions_data)
 
 app = web.Application()
