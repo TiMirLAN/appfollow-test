@@ -13,7 +13,9 @@
                 const buttonElem = formElem.querySelector('.search-button');
                 const inputElem = formElem.querySelector('.search-text');
 
-                buttonElem.addEventListener('click', () => {
+                formElem.addEventListener('submit', event => {
+                    event.preventDefault();
+                    event.stopPropagation();
                     inputElem.parentElement.classList.remove('error');
                     try {
                         if(inputElem.value.startsWith(GOOGLE_PLAY_URL_START)) {
@@ -40,7 +42,7 @@
                                 <input type="texti" class="search-text"/>
                                 <button 
                                     class="ui button search-button"
-                                    type="button"
+                                    type="submit"
                                 >Поиск</button>
                             </div>
                         </div>
