@@ -2,17 +2,24 @@
 # coding=utf-8
 from asyncio import sleep
 from pathlib import Path
-from os import environ
+from os import environ, path
 from aiohttp import web, ClientSession
+import aiohttp_jinja2
+import jinja2
 import motor.motor_asyncio
 
+ICONS_PATH = environ['ICONS_PATH']
 MONGO_HOST = environ.get('MONGO_HOST', '127.0.0.1')
-# Поиск по классам ненадёжен, лучше искать по содержимому.
 REQUIRED_KEYS = ('hl', 'id')
+QUERY = 'id={id}&hl={hl}'
+TEMPLATES_PATH = path.join(
+    path.dirname(path.realpath(__file__)),
+    'templates'
+)
 
 mongo_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_HOST, 27017)
-QUERY = 'id={id}&hl={hl}'
 
+@aiohttp_jinja2.template('index.jinja2')
 async def permissions(request):
     for key in REQUIRED_KEYS:
         if key not in request.query:
@@ -37,14 +44,18 @@ async def permissions(request):
                     ))
                 permission_obj = resp_data
 
-    return web.json_response(dict(
+    return dict(
         icon_path=permission_obj['icon_path'],
         data=permission_obj['data']
-    ))
+    )
 
 app = web.Application()
 
 app.add_routes([web.get('/', permissions)])
-
+aiohttp_jinja2.setup(
+    app,
+    loader=jinja2.FileSystemLoader(TEMPLATES_PATH)
+)
+app.add_routes([web.static('/icons', ICONS_PATH)])
 if __name__ == '__main__':
     web.run_app(app)

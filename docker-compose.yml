@@ -25,9 +25,12 @@ services:
       - "mongodb"
       - "loader"
     environment:
+      ICONS_PATH: /icons
       MONGO_HOST: mongodb
     build:
       context: ./src/permissions_api
+    volumes:
+      - ./assets/icons:/icons
 
   mongodb: 
     image: mongo:latest

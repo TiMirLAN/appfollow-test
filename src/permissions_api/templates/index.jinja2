@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/semantic-ui@2.3.3/dist/semantic.min.css"
+            />
+            <script 
+                src="https://cdn.jsdelivr.net/npm/semantic-ui@2.3.3/dist/semantic.min.js"
+                >
+            </script>
+    </head>
+    <body>
+        <div class="ui container">
+            <div class="ui grid">
+                <div class="four wide column">
+                    <div class="medium ui image">
+                        <img src="{{icon_path}}"/>
+                    </div>
+                </div>
+                {% for item in data %}
+                    <div class="four wide column">
+                        <h4>{{item.section}}</h4>
+                        <ul class="ui bulleted list">
+                         {% for perm in item.permissions %}
+                            <li class="item">{{perm}}</li>
+                         {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </body>
+</html>
