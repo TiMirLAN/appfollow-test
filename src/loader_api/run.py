@@ -62,6 +62,7 @@ def load_icon(chrome, body_node_id, app_id):
     icon_path = Path(ICONS_PATH) / '{}.webp'.format(app_id) 
     with urlopen(icon_src) as remote, open(icon_path, 'wb') as local:
         local.write(remote.read())
+    return icon_path
 
 
 chrome = PyChromeDevTools.ChromeInterface(
@@ -93,11 +94,19 @@ async def load(request):
     body_node_id = document['result']['root']['children'][1]['children'][1]['nodeId']
     permissions_html = get_permissiions_html(chrome, body_node_id)
     permissions_data = parse_permissions(permissions_html)
-    load_icon(chrome, body_node_id, request.query.get('id'))
-    await mongo_client.google_play.permissions.insert_one(dict(
-        query=app_url[43:],
-        data=permissions_data
-    ))
+    icon_path = load_icon(chrome, body_node_id, request.query.get('id'))
+    db_key = app_url[43:]
+    await mongo_client.google_play.permissions.update_one(
+        filter=dict(query={'$eq':db_key}),
+        update={
+            '$set':dict(
+                query=db_key,
+                icon_path=str(icon_path),
+                data=permissions_data
+            )
+        },
+        upsert=True
+    )
     return web.json_response(permissions_data)
 
 app = web.Application()
