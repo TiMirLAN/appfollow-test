@@ -18,7 +18,7 @@ services:
       - ./assets/icons:/icons
 
   permissions:
-    container_name: "permissions-api"
+    container_name: "permissions-page"
     ports:
       - "80:8080"
     links:
@@ -28,7 +28,7 @@ services:
       ICONS_PATH: /icons
       MONGO_HOST: mongodb
     build:
-      context: ./src/permissions_api
+      context: ./src/permissions_page
     volumes:
       - ./assets/icons:/icons
 
