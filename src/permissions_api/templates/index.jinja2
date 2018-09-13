@@ -4,29 +4,77 @@
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/semantic-ui@2.3.3/dist/semantic.min.css"
             />
-            <script 
-                src="https://cdn.jsdelivr.net/npm/semantic-ui@2.3.3/dist/semantic.min.js"
-                >
+            <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.3.3/dist/semantic.min.js"></script>
+            <script type="text/javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+                const GOOGLE_PLAY_URL_START = 'https://play.google.com/store/apps/details';
+                const formElem = document.querySelector(".search-form");
+                const buttonElem = formElem.querySelector('.search-button');
+                const inputElem = formElem.querySelector('.search-text');
+
+                buttonElem.addEventListener('click', () => {
+                    inputElem.parentElement.classList.remove('error');
+                    try {
+                        if(inputElem.value.startsWith(GOOGLE_PLAY_URL_START)) {
+                            const url = new URL(inputElem.value);
+                            const hl = url.searchParams.get('hl');
+                            const id = url.searchParams.get('id');
+                            
+                            window.location.assign(`/?hl=${hl}&id=${id}`);
+                        }
+                    } catch(e) {
+                        inputElem.parentElement.classList.add('error');
+                    }
+                });
+            });
             </script>
     </head>
     <body>
         <div class="ui container">
-            <div class="ui grid">
-                <div class="four wide column">
-                    <div class="medium ui image">
-                        <img src="{{icon_path}}"/>
-                    </div>
+            <div class="row">
+                <div class="sixteen wide column">
+                    <form class="ui form search-form">
+                        <div class="field">
+                            <div class="ui input action">
+                                <input type="texti" class="search-text"/>
+                                <button 
+                                    class="ui button search-button"
+                                    type="button"
+                                >Поиск</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                {% for item in data %}
+            </div>
+            <div class="ui grid">
+                {% if icon_path %}
                     <div class="four wide column">
-                        <h4>{{item.section}}</h4>
-                        <ul class="ui bulleted list">
-                         {% for perm in item.permissions %}
-                            <li class="item">{{perm}}</li>
-                         {% endfor %}
-                        </ul>
+                        <div class="medium ui image">
+                            <img src="{{icon_path}}"/>
+                        </div>
                     </div>
-                {% endfor %}
+                {% endif %}
+                {% if data %}
+                    {% for item in data %}
+                        <div class="four wide column">
+                            <h4>{{item.section}}</h4>
+                            <ul class="ui bulleted list">
+                             {% for perm in item.permissions %}
+                                <li class="item">{{perm}}</li>
+                             {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                {%if error %}
+                    <div class="sixteen wide column">
+                        <div class="ui error message">
+                            <div class="header">Error</div>
+                            <p>{{error}}</p>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </body>

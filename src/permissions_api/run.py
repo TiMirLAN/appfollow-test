@@ -21,6 +21,9 @@ mongo_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_HOST, 27017)
 
 @aiohttp_jinja2.template('index.jinja2')
 async def permissions(request):
+    if not request.query_string:
+        return {}
+
     for key in REQUIRED_KEYS:
         if key not in request.query:
             response = web.json_response(dict(
@@ -37,11 +40,11 @@ async def permissions(request):
             async with session.get('http://loader:8080/?{}'.format(query)) as resp:
                 resp_data = await resp.json()
                 if resp.reason != 'OK':
-                    return web.json_response(dict(
+                    return dict(
                         error= 'Loader api returns error: {error}'.format(
                             **resp_data
                         )
-                    ))
+                    )
                 permission_obj = resp_data
 
     return dict(
