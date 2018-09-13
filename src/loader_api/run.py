@@ -96,18 +96,17 @@ async def load(request):
     permissions_data = parse_permissions(permissions_html)
     icon_path = load_icon(chrome, body_node_id, request.query.get('id'))
     db_key = app_url[43:]
+    update_content = dict(
+        query=db_key,
+        icon_path=str(icon_path),
+        data=permissions_data
+    )
     await mongo_client.google_play.permissions.update_one(
         filter=dict(query={'$eq':db_key}),
-        update={
-            '$set':dict(
-                query=db_key,
-                icon_path=str(icon_path),
-                data=permissions_data
-            )
-        },
+        update={'$set': update_content},
         upsert=True
     )
-    return web.json_response(dict(success=True))
+    return web.json_response(dict(update_content))
 
 app = web.Application()
 

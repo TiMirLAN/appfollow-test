@@ -17,6 +17,18 @@ services:
     volumes:
       - ./assets/icons:/icons
 
+  permissions:
+    container_name: "permissions-api"
+    ports:
+      - "80:8080"
+    links:
+      - "mongodb"
+      - "loader"
+    environment:
+      MONGO_HOST: mongodb
+    build:
+      context: ./src/permissions_api
+
   mongodb: 
     image: mongo:latest
     container_name: "mongodb"
