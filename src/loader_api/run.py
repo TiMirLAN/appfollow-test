@@ -107,7 +107,7 @@ async def load(request):
         },
         upsert=True
     )
-    return web.json_response(permissions_data)
+    return web.json_response(dict(success=True))
 
 app = web.Application()
 
