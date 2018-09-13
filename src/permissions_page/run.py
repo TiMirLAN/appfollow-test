@@ -11,6 +11,7 @@ import motor.motor_asyncio
 ICONS_PATH = environ['ICONS_PATH']
 MONGO_HOST = environ.get('MONGO_HOST', '127.0.0.1')
 REQUIRED_KEYS = ('hl', 'id')
+SUPPORTED_LANGUAGES = ('en', 'ru')
 QUERY = 'id={id}&hl={hl}'
 TEMPLATES_PATH = path.join(
     path.dirname(path.realpath(__file__)),
@@ -26,11 +27,14 @@ async def permissions(request):
 
     for key in REQUIRED_KEYS:
         if key not in request.query:
-            response = web.json_response(dict(
+            return dict(
                 error='Required param not found: {}'.format(key)
-            ))
-            response.set_status(500)
-            return response
+            )
+
+    lang = request.query.get('hl')
+    if lang not in SUPPORTED_LANGUAGES:
+        return dict(error='Unsupported language: {}'.format(lang))
+
     query = QUERY.format(**request.query)
     permission_obj = await mongo_client.google_play.permissions.find_one(
         filter=dict(query={'$eq':query}),
