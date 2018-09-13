@@ -6,6 +6,8 @@ from os import environ
 from urllib.request import urlopen
 from aiohttp import web
 from bs4 import BeautifulSoup
+from socket import gethostbyname
+import motor.motor_asyncio
 import PyChromeDevTools
 
 GOOGLE_PLAY_URL_TEMPLATE = (
@@ -13,6 +15,8 @@ GOOGLE_PLAY_URL_TEMPLATE = (
     '?id={id}&hl={hl}'
 )
 ICONS_PATH = environ['ICONS_PATH']
+CHROMIUM_HOST = environ.get('CHROMIUM_HOST', '127.0.0.1')
+MONGO_HOST = environ.get('MONGO_HOST', '127.0.0.1')
 # Поиск по классам ненадёжен, лучше искать по содержимому.
 CLICK_EXPRESSION = """
 let allLinks = document.querySelectorAll('.hrTbp');
@@ -60,12 +64,15 @@ def load_icon(chrome, body_node_id, app_id):
         local.write(remote.read())
 
 
-chrome = PyChromeDevTools.ChromeInterface()
+chrome = PyChromeDevTools.ChromeInterface(
+        host=gethostbyname('chromium'),
+        port=9222
+)
 chrome.Network.enable()
 chrome.Page.enable()
 chrome.Runtime.enable()
 chrome.DOM.enable()
-
+mongo_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_HOST, 27017)
 
 async def load(request):
     for key in REQUIRED_KEYS:
@@ -75,9 +82,8 @@ async def load(request):
             ))
             response.set_status(500)
             return response
-    chrome.Page.navigate(
-        url=GOOGLE_PLAY_URL_TEMPLATE.format(**request.query)
-    )
+    app_url = GOOGLE_PLAY_URL_TEMPLATE.format(**request.query)
+    chrome.Page.navigate(url=app_url)
     chrome.wait_event("Page.loadEventFired", timeout=60)
     show_permissions_popup(chrome)
     # Должен быть не sleep, должно быть ожидание события перерисовки
@@ -88,6 +94,10 @@ async def load(request):
     permissions_html = get_permissiions_html(chrome, body_node_id)
     permissions_data = parse_permissions(permissions_html)
     load_icon(chrome, body_node_id, request.query.get('id'))
+    await mongo_client.google_play.permissions.insert_one(dict(
+        query=app_url[43:],
+        data=permissions_data
+    ))
     return web.json_response(permissions_data)
 
 app = web.Application()

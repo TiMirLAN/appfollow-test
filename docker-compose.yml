@@ -1,31 +1,31 @@
-version: "3"
+version: "3.5"
 
 services:
   loader:
     container_name: "loader-api"
     ports:
       - "90:8080"
-    depends_on:
+    links:
       - "mongodb"
       - "chromium"
     environment:
       ICONS_PATH: /icons
+      CHROMIUM_HOST: chromium
+      MONGO_HOST: mongodb
     build:
       context: ./src/loader_api
-      volumes: ./assets/icons:/icons
+    volumes:
+      - ./assets/icons:/icons
 
   mongodb: 
     image: mongo:latest
     container_name: "mongodb"
-    ports:
-      - "27017:27017"
     volumes:
       - ./mongodata/db:/data/db
 
   chromium:
-    ports:
-      - "9222:9222"
+    container_name: "chromium"
     build:
       context: ./src/chromium
-
-
+    ports:
+      - "9222:9222"
